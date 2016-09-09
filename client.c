@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
     //printf("client: connecting to %s\n", s);
 
     while(1){
-        if (fgets(&send_buffer[HEADER_BYTES], MAX_MESSAGE_SIZE, stdin) == EOF){
+        if (fgets(&send_buffer[HEADER_BYTES], MAX_MESSAGE_SIZE, stdin) == NULL){
             //perror("fget");
             exit(0);
         }
@@ -165,7 +165,6 @@ int main(int argc, char *argv[])
             perror("recv");
             exit(1);
         }
-        send_buffer[numbytes] = '\0';
 
         printf("%s", &send_buffer[HEADER_BYTES]);
 
