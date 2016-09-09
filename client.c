@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
     //printf("client: connecting to %s\n", s);
 
     while(1){
-        if (fgets(&send_buffer[HEADER_BYTES], MAX_MESSAGE_SIZE, stdin) == NULL){
+        if (fgets(&send_buffer[HEADER_BYTES], MAX_MESSAGE_SIZE + 1, stdin) == NULL){
             //perror("fget");
             exit(0);
         }
