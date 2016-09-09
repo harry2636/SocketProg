@@ -22,7 +22,7 @@ I implemented Caesar Cipher algorithm with suggested header transfer algorithm.
 
 #define BACKLOG 10     // how many pending connections queue will hold
 
-#define MAX_MESSAGE_SIZE ((1<<20)) // max number of bytes we can get at once, should be 10MB
+#define MAX_MESSAGE_SIZE (10 * (1<<20)) // max number of bytes we can get at once, should be 10MB
 
 #define HEADER_BYTES 8
 
@@ -120,10 +120,13 @@ int main(void)
     int yes=1;
     char s[INET6_ADDRSTRLEN];
     int rv;
-    char recv_buffer[MAX_MESSAGE_SIZE+1];
-    char send_buffer[MAX_MESSAGE_SIZE+1];
     int numbytes;
     uint16_t checksum = 0;
+
+    //char recv_buffer[MAX_MESSAGE_SIZE+1];
+    //char send_buffer[MAX_MESSAGE_SIZE+1];
+    char *recv_buffer = malloc(MAX_MESSAGE_SIZE+1);
+
 
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC;
@@ -229,11 +232,11 @@ int main(void)
                 checksum = checksum1(recv_buffer, HEADER_BYTES + strlen(&recv_buffer[HEADER_BYTES]));
                 memcpy(&recv_buffer[2], &checksum, sizeof(uint16_t));
                 
-                memcpy(&send_buffer, &recv_buffer, HEADER_BYTES + strlen(&recv_buffer[HEADER_BYTES])+1);
+                //memcpy(&send_buffer, &recv_buffer, HEADER_BYTES + strlen(&recv_buffer[HEADER_BYTES])+1);
 
-                debug_message(send_buffer);
+                debug_message(recv_buffer);
 
-                if (send(new_fd, send_buffer, HEADER_BYTES + strlen(&send_buffer[HEADER_BYTES]), 0) == -1){
+                if (send(new_fd, recv_buffer, HEADER_BYTES + strlen(&recv_buffer[HEADER_BYTES]), 0) == -1){
                     perror("send");
                     break;
                 }
