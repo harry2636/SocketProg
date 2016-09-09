@@ -58,7 +58,7 @@ void debug_message(const char *buf){
     printf("shift: %hhu\n", buf[1]);
     printf("checksum: %hu\n", *(uint16_t *)(&buf[2]) );
     printf("length: %u\n", ntohl( *(uint32_t *) (&buf[4])));
-    printf("data: %s\n", &buf[HEADER_BYTES]);
+    printf("data: %s\n\n", &buf[HEADER_BYTES]);
 
 }
 

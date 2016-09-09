@@ -55,10 +55,42 @@ void debug_message(const char *buf){
     printf("shift: %hhu\n", buf[1]);
     printf("checksum: %hu\n", *(uint16_t *)(&buf[2]) );
     printf("length: %u\n", ntohl( *(uint32_t *) (&buf[4])));
-    printf("data: %s\n", &buf[HEADER_BYTES]);
+    //printf("data: %s\n\n", &buf[HEADER_BYTES]);
+    int i=0;
+    uint32_t length = ntohl( *(uint32_t *) (&buf[4]));
+    length -= 8;
+    uint32_t ori_length = length;
+    while (length){
+        printf("11\n");
+        printf("%hu\n", (unsigned short)buf[HEADER_BYTES + ori_length - length] );
+        length--;
+    }
 
 }
 
+/* Modified fgets implementation in The C Programming Language.(p165, 2nd ed.)
+I found it in http://stackoverflow.com/questions/16397832/fgets-implementation-kr */
+
+uint32_t new_fgets(char* s, int n, FILE *iop)
+{
+    register int c;
+    register char* cs;
+    cs = s;
+    uint32_t count = 0;
+    while(--n > 0 && (c = getc(iop)) != EOF)
+    {
+        count++;
+        //printf("fgets c: %c !\n", c);
+        //printf("count :%d\n", count);
+
+    if((*cs++ = c) == '\n')
+        break;          
+    }
+
+    *cs = '\0';
+    //return (c == EOF && cs == s) ? NULL : s;
+    return count;
+}
 
 
 // get sockaddr, IPv4 or IPv6:
@@ -133,30 +165,43 @@ int main(int argc, char *argv[])
     //printf("client: connecting to %s\n", s);
 
     while(1){
-        if (fgets(&send_buffer[HEADER_BYTES], MAX_MESSAGE_SIZE + 1, stdin) == NULL){
+        uint32_t count = new_fgets(&send_buffer[HEADER_BYTES], MAX_MESSAGE_SIZE + 1, stdin);
+        if (count == 0){
             //perror("fget");
             exit(0);
         }
         /*
-        if(send_buffer[HEADER_BYTES + strlen(&send_buffer[HEADER_BYTES])-1] == '\n'){
-            send_buffer[HEADER_BYTES + strlen(&send_buffer[HEADER_BYTES])-1] = '\0';
+        int i = 0;
+        while (send_buffer[HEADER_BYTES + i] != '\n' && send_buffer[HEADER_BYTES + i] != EOF){
+            i++;
+        }
+        if (send_buffer[HEADER_BYTES + i] == '\n'){
+            i++;
+        }
+        int buf_len = i;
+        */
+        int buf_len = count;
+        /*
+        if(send_buffer[HEADER_BYTES + buf_len-1] == '\n'){
+            send_buffer[HEADER_BYTES + buf_len-1] = '\0';
         }
         */
         //printf("sending: %s\n", &send_buffer[HEADER_BYTES]);
 
 
-        length = htonl(HEADER_BYTES + strlen(&send_buffer[HEADER_BYTES]));
+        length = htonl(HEADER_BYTES + buf_len);
         memcpy(&send_buffer[4], &length, sizeof(int));
 
         checksum = 0;
         memcpy(&send_buffer[2], &checksum, sizeof(uint16_t));
 
-        checksum = checksum1(send_buffer, HEADER_BYTES + strlen(&send_buffer[HEADER_BYTES]));
+        checksum = checksum1(send_buffer, HEADER_BYTES + buf_len);
         memcpy(&send_buffer[2], &checksum, sizeof(uint16_t));
 
         //debug_message(send_buffer);
+        //printf("==================\n");
 
-        if ((numbytes = send(sockfd, send_buffer, HEADER_BYTES + strlen(&send_buffer[HEADER_BYTES]), 0 )) == -1) {
+        if ((numbytes = send(sockfd, send_buffer, HEADER_BYTES + buf_len, 0 )) == -1) {
             perror("send");
             exit(1);
         }
@@ -166,7 +211,16 @@ int main(int argc, char *argv[])
             exit(1);
         }
 
-        printf("%s", &send_buffer[HEADER_BYTES]);
+        numbytes -= 8;
+        int ori_numbytes = numbytes;
+        while(numbytes != 0){
+            //printf("strlen:%lu\n", strlen(&send_buffer[HEADER_BYTES]));
+            printf("%c", send_buffer[HEADER_BYTES + ori_numbytes - numbytes]);
+            numbytes--;
+        }
+
+
+        //printf("%c", &send_buffer[HEADER_BYTES]);
 
         //debug_message(send_buffer);
     }
