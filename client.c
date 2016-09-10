@@ -61,7 +61,7 @@ void debug_message(const char *buf){
     length -= 8;
     uint32_t ori_length = length;
     while (length){
-        printf("11\n");
+        printf("Printed char value\n");
         printf("%hu\n", (unsigned short)buf[HEADER_BYTES + ori_length - length] );
         length--;
     }
@@ -92,7 +92,7 @@ uint32_t new_fgets(char* s, int n, FILE *iop)
     return count;
 }
 
-
+/* function from http://beej.us/guide/bgnet/output/html/singlepage/bgnet.html */
 // get sockaddr, IPv4 or IPv6:
 void *get_in_addr(struct sockaddr *sa)
 {
@@ -103,6 +103,7 @@ void *get_in_addr(struct sockaddr *sa)
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
+/* part of the codes are based on network connecting structure code from http://beej.us/guide/bgnet/output/html/singlepage/bgnet.html */
 int main(int argc, char *argv[])
 {
     int sockfd, numbytes;  

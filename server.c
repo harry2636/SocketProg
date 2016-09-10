@@ -56,9 +56,18 @@ unsigned short checksum1(const char *buf, unsigned size)
 void debug_message(const char *buf){
     printf("operator: %hhu\n", buf[0]);
     printf("shift: %hhu\n", buf[1]);
-    printf("checksum: %hu\n", *(uint16_t *)(&buf[2]) );
+    printf("checksum: %hu\n", *(uint16_t *)(&buf[2]));
     printf("length: %u\n", ntohl( *(uint32_t *) (&buf[4])));
-    printf("data: %s\n\n", &buf[HEADER_BYTES]);
+    //printf("data: %s\n\n", &buf[HEADER_BYTES]);
+    int i=0;
+    uint32_t length = ntohl( *(uint32_t *) (&buf[4]));
+    length -= 8;
+    uint32_t ori_length = length;
+    while (length){
+        printf("Printed char value\n");
+        printf("%hu\n", (unsigned short)buf[HEADER_BYTES + ori_length - length] );
+        length--;
+    }
 
 }
 
@@ -88,7 +97,7 @@ char caesar_decrypt(char c, uint8_t shift){
 }
 
 
-
+/* function from http://beej.us/guide/bgnet/output/html/singlepage/bgnet.html */
 void sigchld_handler(int s)
 {
     // waitpid() might overwrite errno, so we save and restore it:
@@ -99,7 +108,7 @@ void sigchld_handler(int s)
     errno = saved_errno;
 }
 
-
+/* function from http://beej.us/guide/bgnet/output/html/singlepage/bgnet.html */
 // get sockaddr, IPv4 or IPv6:
 void *get_in_addr(struct sockaddr *sa)
 {
@@ -109,7 +118,7 @@ void *get_in_addr(struct sockaddr *sa)
 
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
-
+/* part of the codes are based on network connecting structure code from http://beej.us/guide/bgnet/output/html/singlepage/bgnet.html */
 int main(void)
 {
     int sockfd, new_fd;  // listen on sock_fd, new connection on new_fd
@@ -126,7 +135,6 @@ int main(void)
     //char recv_buffer[MAX_MESSAGE_SIZE+1];
     //char send_buffer[MAX_MESSAGE_SIZE+1];
     char *recv_buffer = malloc(MAX_MESSAGE_SIZE+1);
-
 
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC;
@@ -203,18 +211,35 @@ int main(void)
                     perror("recv");
                     break;
                 }
+                else if (numbytes == 0){
+                    printf("zero recv, close connection\n");
+                    break;
+                }
                 printf("numbytes:%d\n", numbytes);
-                recv_buffer[numbytes] = '\0';
-                printf("server received: %s\n", &recv_buffer[HEADER_BYTES]);
+                //recv_buffer[numbytes] = '\0';
+                //printf("server received: %s\n", &recv_buffer[HEADER_BYTES]);
 
-                debug_message(recv_buffer);
 
-                char c = recv_buffer[HEADER_BYTES];
+                int ori_checksum = *(uint16_t *)(&recv_buffer[2]);
+
+                checksum = 0;
+                memcpy(&recv_buffer[2], &checksum, sizeof(uint16_t));
+                //printf("before checksum\n");
+                if (ori_checksum != checksum1(recv_buffer, numbytes)){
+                    perror("checksum");
+                    break;
+                }
+                //printf("after checksum\n");
+
+                //debug_message(recv_buffer);
+
+                //char c = recv_buffer[HEADER_BYTES];
                 char *addr = &recv_buffer[HEADER_BYTES];
                 uint8_t op = recv_buffer[0];
                 uint8_t shift = recv_buffer[1];
 
-                while(addr[0]!= '\0'){
+                int i;
+                for (i = 0; i < numbytes - 8; i++) {
                     if (op == 0) {
                         addr[0] = caesar_encrypt(addr[0], shift);
                     }
@@ -226,17 +251,16 @@ int main(void)
 
                 }
 
-                checksum = 0;
-                memcpy(&recv_buffer[2], &checksum, sizeof(uint16_t));
 
-                checksum = checksum1(recv_buffer, HEADER_BYTES + strlen(&recv_buffer[HEADER_BYTES]));
+
+                checksum = checksum1(recv_buffer, numbytes);
                 memcpy(&recv_buffer[2], &checksum, sizeof(uint16_t));
                 
-                //memcpy(&send_buffer, &recv_buffer, HEADER_BYTES + strlen(&recv_buffer[HEADER_BYTES])+1);
+                //memcpy(&send_buffer, &recv_buffer, numbytes+1);
 
                 debug_message(recv_buffer);
 
-                if (send(new_fd, recv_buffer, HEADER_BYTES + strlen(&recv_buffer[HEADER_BYTES]), 0) == -1){
+                if (send(new_fd, recv_buffer, numbytes, 0) == -1){
                     perror("send");
                     break;
                 }
