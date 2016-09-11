@@ -17,11 +17,12 @@ I implemented Caesar Cipher algorithm with suggested header transfer algorithm.
 
 #include <arpa/inet.h>
 
-#define PORT "3000" // the port client will be connecting to 
 
 #define MAX_MESSAGE_SIZE (10 * (1<<20)) // max number of bytes we can get at once, should be 10MB
 
 #define HEADER_BYTES 8
+
+#define ARGS 9 // number of command line arguments
 
 /* checksum calculting function from http://locklessinc.com/articles/tcp_checksum/ which is introduced the in Lab slide */
 unsigned short checksum1(const char *buf, unsigned size)
@@ -56,7 +57,6 @@ void debug_message(const char *buf){
     printf("checksum: %hu\n", *(uint16_t *)(&buf[2]) );
     printf("length: %u\n", ntohl( *(uint32_t *) (&buf[4])));
     //printf("data: %s\n\n", &buf[HEADER_BYTES]);
-    int i=0;
     uint32_t length = ntohl( *(uint32_t *) (&buf[4]));
     length -= 8;
     uint32_t ori_length = length;
@@ -68,7 +68,7 @@ void debug_message(const char *buf){
 
 }
 
-/* Modified fgets implementation in The C Programming Language.(p165, 2nd ed.)
+/* Modified clibrary fgets function implementation in The C Programming Language.(p165, 2nd ed.)
 I found it in http://stackoverflow.com/questions/16397832/fgets-implementation-kr */
 
 uint32_t new_fgets(char* s, int n, FILE *iop)
@@ -113,15 +113,79 @@ int main(int argc, char *argv[])
     struct addrinfo hints, *servinfo, *p;
     int rv;
     char s[INET6_ADDRSTRLEN];
+    char *hostaddr, *port;
 
     uint8_t op = 0;
-    uint8_t shift = 3;
+    uint8_t shift = 0;
     uint16_t checksum = 0;
     uint32_t length = htonl(0);
 
-    if (argc != 2) {
-        fprintf(stderr,"usage: client hostname\n");
+    char h_flag = 0, p_flag = 0, o_flag =0, s_flag = 0;         
+
+    if (argc != ARGS) {
+        fprintf(stderr,"example: ./client –h 143.248.111.222 –p 1234 –o 0 –s 5\n");
         exit(1);
+    }
+
+    int i = 0;
+    for (i = 1; i < ARGS; i = i + 2){
+        //printf("argv[i]:%s, cmp to:%s, %d\n", argv[i], "-h", strcmp(argv[i], "-h"));
+        if (!strcmp(argv[i], "-h")){
+            if (h_flag == 1) {
+                perror("Duplicated parameter");
+                exit(1);
+            }
+            memcpy(&hostaddr, &argv[i+1], sizeof(argv[i+1]));
+            //fprintf(stdout, "-h\n");
+            h_flag = 1;
+        }
+        else if (!strcmp(argv[i], "-p")){
+            if (p_flag == 1) {
+                perror("Duplicated parameter");
+                exit(1);
+            }
+            memcpy(&port, &argv[i+1], sizeof(argv[i+1]));
+            //fprintf(stdout, "-p\n");
+            p_flag = 1;
+        }
+        else if (!strcmp(argv[i], "-o")){
+            if (o_flag == 1) {
+                perror("Duplicated parameter");
+                exit(1);
+            }
+            op = atoi(argv[i+1]);
+            if (op != 0 && op != 1) {
+                perror("Invalid op value");
+                exit(1);
+            }
+            //fprintf(stdout, "-o\n");
+            o_flag = 1;
+        }
+        else if (!strcmp(argv[i], "-s")){
+            if (s_flag == 1) {
+                perror("Duplicated parameter");
+                exit(1);
+            }
+            int ori_shift = atoi(argv[i+1]);
+
+            if (ori_shift < 0) {
+                perror("Invalid shift value");
+                exit(1);
+            }
+
+            if (ori_shift >= 26) {
+                ori_shift %=  26;
+            }
+            shift = (uint8_t)ori_shift;
+
+            s_flag = 1;
+        }
+        else {
+            fprintf(stderr, "Invalid parameter option in %dth param: %s\n", i, argv[i]);
+            exit(1);
+        }
+
+
     }
 
     memcpy(&send_buffer[0], &op, sizeof(uint8_t));
@@ -134,7 +198,7 @@ int main(int argc, char *argv[])
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
 
-    if ((rv = getaddrinfo(argv[1], PORT, &hints, &servinfo)) != 0) {
+    if ((rv = getaddrinfo(hostaddr, port, &hints, &servinfo)) != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
         return 1;
     }

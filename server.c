@@ -18,13 +18,14 @@ I implemented Caesar Cipher algorithm with suggested header transfer algorithm.
 #include <sys/wait.h>
 #include <signal.h>
 
-#define PORT "3000"  // the port users will be connecting to
 
 #define BACKLOG 10     // how many pending connections queue will hold
 
 #define MAX_MESSAGE_SIZE (10 * (1<<20)) // max number of bytes we can get at once, should be 10MB
 
 #define HEADER_BYTES 8
+
+#define ARGS 3 // number of command line arguments
 
 /* checksum calculting function from http://locklessinc.com/articles/tcp_checksum/ which is introduced in the Lab slide */
 unsigned short checksum1(const char *buf, unsigned size)
@@ -59,20 +60,25 @@ void debug_message(const char *buf){
     printf("checksum: %hu\n", *(uint16_t *)(&buf[2]));
     printf("length: %u\n", ntohl( *(uint32_t *) (&buf[4])));
     //printf("data: %s\n\n", &buf[HEADER_BYTES]);
-    int i=0;
     uint32_t length = ntohl( *(uint32_t *) (&buf[4]));
     length -= 8;
+    /*
     uint32_t ori_length = length;
     while (length){
         printf("Printed char value\n");
         printf("%hu\n", (unsigned short)buf[HEADER_BYTES + ori_length - length] );
         length--;
     }
+    */
 
 }
 
 char caesar_encrypt(char c, uint8_t shift){
     c = tolower(c);
+    if (shift >= 26) {
+        shift = shift % 26;
+        //printf("shift:%hhu\n", shift);
+    }
     if (c >= 97 && c + shift <= 122) {
         c += shift;
     }
@@ -85,12 +91,15 @@ char caesar_encrypt(char c, uint8_t shift){
 
 char caesar_decrypt(char c, uint8_t shift){
     c = tolower(c);
+    if (shift >= 26) {
+        shift = shift % 26;
+    }
     if (c <=122 && c - shift >= 97) {
         c -= shift;
     }
     else if (c - shift < 97 && c >= 97) {
         uint8_t remain = shift - (c - 97 +1);
-        c = 'z' - shift;
+        c = 'z' - remain;
     }
 
     return c;
@@ -119,7 +128,7 @@ void *get_in_addr(struct sockaddr *sa)
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 /* part of the codes are based on network connecting structure code from http://beej.us/guide/bgnet/output/html/singlepage/bgnet.html */
-int main(void)
+int main(int argc, char *argv[])
 {
     int sockfd, new_fd;  // listen on sock_fd, new connection on new_fd
     struct addrinfo hints, *servinfo, *p;
@@ -131,17 +140,32 @@ int main(void)
     int rv;
     int numbytes;
     uint16_t checksum = 0;
+    char *port = malloc(strlen(argv[2]) + 1);
 
     //char recv_buffer[MAX_MESSAGE_SIZE+1];
     //char send_buffer[MAX_MESSAGE_SIZE+1];
     char *recv_buffer = malloc(MAX_MESSAGE_SIZE+1);
+
+    if (argc != ARGS) {
+        fprintf(stderr,"example: ./server -p 3123\n");
+        exit(1);
+    }
+
+    if (!strcmp(argv[1], "-p")) {
+        memcpy(port, argv[2], strlen(argv[2]) + 1);
+        printf("port: %s\n", port);
+    }
+    else {
+        perror("Invalid parameter option");
+        exit(1);
+    }
 
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE; // use my IP
 
-    if ((rv = getaddrinfo(NULL, PORT, &hints, &servinfo)) != 0) {
+    if ((rv = getaddrinfo(NULL, port, &hints, &servinfo)) != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
         return 1;
     }
@@ -219,6 +243,8 @@ int main(void)
                 //recv_buffer[numbytes] = '\0';
                 //printf("server received: %s\n", &recv_buffer[HEADER_BYTES]);
 
+                debug_message(recv_buffer);
+
 
                 int ori_checksum = *(uint16_t *)(&recv_buffer[2]);
 
@@ -231,7 +257,7 @@ int main(void)
                 }
                 //printf("after checksum\n");
 
-                //debug_message(recv_buffer);
+                
 
                 //char c = recv_buffer[HEADER_BYTES];
                 char *addr = &recv_buffer[HEADER_BYTES];
@@ -244,7 +270,7 @@ int main(void)
                         addr[0] = caesar_encrypt(addr[0], shift);
                     }
                     else if (op == 1) {
-                        addr[1] = caesar_decrypt(addr[0], shift);
+                        addr[0] = caesar_decrypt(addr[0], shift);
                     }
                     
                     addr++;
