@@ -77,14 +77,19 @@ uint32_t new_fgets(char* s, int n, FILE *iop)
     register char* cs;
     cs = s;
     uint32_t count = 0;
-    while(--n > 0 && (c = getc(iop)) != EOF)
-    {
+    while (--n > 0 && (c = getc(iop)) != EOF) {
         count++;
         //printf("fgets c: %c !\n", c);
         //printf("count :%d\n", count);
 
-    if((*cs++ = c) == '\n')
-        break;          
+        if ((*cs++ = c) == '\n') {
+            break;
+        }
+
+        if (count == 1000) {
+            cs++;
+            break;
+        }
     }
 
     *cs = '\0';

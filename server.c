@@ -239,11 +239,11 @@ int main(int argc, char *argv[])
                     printf("zero recv, close connection\n");
                     break;
                 }
-                printf("numbytes:%d\n", numbytes);
+                //printf("numbytes:%d\n", numbytes);
                 //recv_buffer[numbytes] = '\0';
                 //printf("server received: %s\n", &recv_buffer[HEADER_BYTES]);
 
-                debug_message(recv_buffer);
+                //debug_message(recv_buffer);
 
 
                 int ori_checksum = *(uint16_t *)(&recv_buffer[2]);
@@ -284,7 +284,7 @@ int main(int argc, char *argv[])
                 
                 //memcpy(&send_buffer, &recv_buffer, numbytes+1);
 
-                debug_message(recv_buffer);
+                //debug_message(recv_buffer);
 
                 if (send(new_fd, recv_buffer, numbytes, 0) == -1){
                     perror("send");

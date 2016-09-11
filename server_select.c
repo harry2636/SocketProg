@@ -237,7 +237,7 @@ int main(int argc, char *argv[])
                         // got error or connection closed by client
                         if (nbytes == 0) {
                             // connection closed
-                            printf("selectserver: socket %d hung up\n", i);
+                            printf("selectserver: close connection in socket %d\n", i);
                         } else {
                             perror("recv");
                         }
@@ -277,7 +277,7 @@ int main(int argc, char *argv[])
                         checksum = checksum1(recv_buffer, nbytes);
                         memcpy(&recv_buffer[2], &checksum, sizeof(uint16_t));
 
-                        debug_message(recv_buffer);
+                        //debug_message(recv_buffer);
 
                         if (send(new_fd, recv_buffer, nbytes, 0) == -1){
                             perror("send");
