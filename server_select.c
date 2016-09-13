@@ -139,19 +139,22 @@ int main(int argc, char *argv[])
                             newfd);
                     }
                 } else {
-                    int new_fd = i;
+
                     // handle data from a client
-                    if ((nbytes = recv(i, recv_buffer, MAX_MESSAGE_SIZE, 0)) <= 0) {
+                    if ((nbytes = recv_large(i, recv_buffer)) <= 0) {
+                    //if ((nbytes = recv(i, recv_buffer, MAX_MESSAGE_SIZE, 0)) <= 0) {
                         // got error or connection closed by client
                         if (nbytes == 0) {
                             // connection closed
                             printf("selectserver: close connection in socket %d\n", i);
-                        } else {
+                        }
+                        else {
                             perror("recv");
                         }
                         close(i); // bye!
                         FD_CLR(i, &master); // remove from master set
-                    } else {
+                    }
+                    else {
 
                         //debug_message(recv_buffer);
 
@@ -169,8 +172,8 @@ int main(int argc, char *argv[])
                         uint8_t op = recv_buffer[0];
                         uint8_t shift = recv_buffer[1];
 
-                        int i;
-                        for (i = 0; i < nbytes - 8; i++) {
+                        int iter;
+                        for (iter = 0; iter < nbytes - 8; iter++) {
                             if (op == 0) {
                                 addr[0] = caesar_encrypt(addr[0], shift);
                             }
@@ -187,7 +190,7 @@ int main(int argc, char *argv[])
 
                         //debug_message(recv_buffer);
 
-                        if (send(new_fd, recv_buffer, nbytes, 0) == -1){
+                        if (send(i, recv_buffer, nbytes, 0) == -1){
                             perror("send");
                             break;
                         }

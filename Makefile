@@ -19,16 +19,19 @@ client: client.c packet.c packet.h
 server_select: server_select.c packet.c packet.h
 	$(CC) $(CFLAGS) -o server_select server_select.c packet.c
 
-check: server client server_select
-	./client -h 143.248.56.16 -p 3000 -o 0 -s 100000 < sample/burrito.txt > 1.txt
-	./client -h localhost -p 3000 -o 0 -s 100000 <sample/burrito.txt > 2.txt
+mycheck: server client server_select
+	./client -h 143.248.56.16 -p 3000 -o 0 -s 3 < sample/burrito.txt > 1.txt
+	./client -h localhost -p 3000 -o 0 -s 3 <sample/burrito.txt > 2.txt
 	diff 1.txt 2.txt
-	./client -h 143.248.56.16 -p 3000 -o 0 -s 100000 < sample/crossbow.txt > 1.txt
-	./client -h localhost -p 3000 -o 0 -s 100000 <sample/crossbow.txt > 2.txt
+	diff 1.txt sample/burrito_encrypted.txt
+	./client -h 143.248.56.16 -p 3000 -o 0 -s 3 < sample/crossbow.txt > 1.txt
+	./client -h localhost -p 3000 -o 0 -s 3 <sample/crossbow.txt > 2.txt
 	diff 1.txt 2.txt
-	./client -h 143.248.56.16 -p 3000 -o 0 -s 100000 < sample/sample.txt > 1.txt
-	./client -h localhost -p 3000 -o 0 -s 100000 <sample/sample.txt > 2.txt
+	diff 1.txt sample/crossbow_encrypted.txt
+	./client -h 143.248.56.16 -p 3000 -o 0 -s 3 < sample/sample.txt > 1.txt
+	./client -h localhost -p 3000 -o 0 -s 3 <sample/sample.txt > 2.txt
 	diff 1.txt 2.txt
+	diff 1.txt sample/sample_encrypted.txt
 
 
 

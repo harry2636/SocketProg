@@ -90,5 +90,32 @@ char caesar_decrypt(char c, uint8_t shift){
     return c;
 }
 
+int recv_large(int sockfd, char *buf){
+	int numbytes;
+    if ((numbytes = recv(sockfd, buf, 8, 0)) == -1) {
+        return -1;
+    }
+    else if (numbytes == 0) {
+    	return 0;
+    }
+
+    int length_receive = ntohl( *(uint32_t *) (&buf[4]));
+    length_receive -= numbytes;
+    int offset = numbytes;
+
+    while(length_receive) {
+        numbytes = recv(sockfd, buf + offset, 1000, 0);
+        //printf("In_loop numbytes_recv:%d\n", numbytes);
+        if (numbytes > 0) {
+            length_receive -= numbytes;
+            offset += numbytes;
+        }
+        else {
+        	return -1;
+        }
+    }
+    return offset;
+}
+
 
 

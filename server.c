@@ -139,35 +139,33 @@ int main(int argc, char *argv[])
         if (!fork()) { // this is the child process
             close(sockfd); // child doesn't need the listener
             while(1){
+                if ((numbytes = recv_large(new_fd, recv_buffer)) == -1){
+                    perror("recv");
+                    break;
+                }                
+                /*
                 if ((numbytes = recv(new_fd, recv_buffer, MAX_MESSAGE_SIZE, 0)) == -1){
                     perror("recv");
                     break;
                 }
+                */
                 else if (numbytes == 0){
                     printf("zero recv, close connection\n");
                     break;
                 }
-                //printf("numbytes:%d\n", numbytes);
-                //recv_buffer[numbytes] = '\0';
-                //printf("server received: %s\n", &recv_buffer[HEADER_BYTES]);
-
-                //debug_message(recv_buffer);
+                printf("numbytes:%d\n", numbytes);
+                debug_message(recv_buffer);
 
 
                 int ori_checksum = *(uint16_t *)(&recv_buffer[2]);
 
                 checksum = 0;
                 memcpy(&recv_buffer[2], &checksum, sizeof(uint16_t));
-                //printf("before checksum\n");
                 if (ori_checksum != checksum1(recv_buffer, numbytes)){
                     perror("checksum");
                     break;
                 }
-                //printf("after checksum\n");
 
-                
-
-                //char c = recv_buffer[HEADER_BYTES];
                 char *addr = &recv_buffer[HEADER_BYTES];
                 uint8_t op = recv_buffer[0];
                 uint8_t shift = recv_buffer[1];
@@ -190,7 +188,6 @@ int main(int argc, char *argv[])
                 checksum = checksum1(recv_buffer, numbytes);
                 memcpy(&recv_buffer[2], &checksum, sizeof(uint16_t));
                 
-                //memcpy(&send_buffer, &recv_buffer, numbytes+1);
 
                 //debug_message(recv_buffer);
 

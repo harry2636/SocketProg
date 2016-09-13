@@ -38,8 +38,8 @@ uint32_t new_fgets(char* s, int n, FILE *iop)
         if ((*cs++ = c) == '\n') {
             break;
         }
-
         if (count == 1000) {
+        //if (count == 1000*1000*10) {
             cs++;
             break;
         }
@@ -48,6 +48,18 @@ uint32_t new_fgets(char* s, int n, FILE *iop)
     *cs = '\0';
     //return (c == EOF && cs == s) ? NULL : s;
     return count;
+}
+
+int is_integer(char *target){
+    int flag = 1;
+
+    int i;
+    for (i = 0; i < strlen(target); i++) {
+        if (!isdigit(target[i])) {
+            flag = 0;
+        }
+    }
+    return flag;
 }
 
 /* part of the codes are based on network connecting structure code from http://beej.us/guide/bgnet/output/html/singlepage/bgnet.html */
@@ -76,14 +88,12 @@ int main(int argc, char *argv[])
 
     int i = 0;
     for (i = 1; i < ARGS; i = i + 2){
-        //printf("argv[i]:%s, cmp to:%s, %d\n", argv[i], "-h", strcmp(argv[i], "-h"));
         if (!strcmp(argv[i], "-h")){
             if (h_flag == 1) {
                 perror("Duplicated parameter");
                 exit(1);
             }
             memcpy(&hostaddr, &argv[i+1], sizeof(argv[i+1]));
-            //fprintf(stdout, "-h\n");
             h_flag = 1;
         }
         else if (!strcmp(argv[i], "-p")){
@@ -92,7 +102,6 @@ int main(int argc, char *argv[])
                 exit(1);
             }
             memcpy(&port, &argv[i+1], sizeof(argv[i+1]));
-            //fprintf(stdout, "-p\n");
             p_flag = 1;
         }
         else if (!strcmp(argv[i], "-o")){
@@ -100,12 +109,15 @@ int main(int argc, char *argv[])
                 perror("Duplicated parameter");
                 exit(1);
             }
+            if (!is_integer(argv[i+1])) {
+                perror("Invalid operation value");
+                exit(1);
+            }
             op = atoi(argv[i+1]);
             if (op != 0 && op != 1) {
                 perror("Invalid op value");
                 exit(1);
             }
-            //fprintf(stdout, "-o\n");
             o_flag = 1;
         }
         else if (!strcmp(argv[i], "-s")){
@@ -113,21 +125,19 @@ int main(int argc, char *argv[])
                 perror("Duplicated parameter");
                 exit(1);
             }
-            int ori_shift = atoi(argv[i+1]);
-
-            
-            if (ori_shift < 0) {
+            if (!is_integer(argv[i+1])) {
                 perror("Invalid shift value");
                 exit(1);
             }
-
+            int ori_shift = atoi(argv[i+1]);
+            if (ori_shift < 0) {
+                perror("Negative shift value");
+                exit(1);
+            }
             if (ori_shift >= 26) {
                 ori_shift %=  26;
             }
-
-            
             shift = (uint8_t)ori_shift;
-
             s_flag = 1;
         }
         else {
@@ -185,22 +195,9 @@ int main(int argc, char *argv[])
             //perror("fget");
             exit(0);
         }
-        /*
-        int i = 0;
-        while (send_buffer[HEADER_BYTES + i] != '\n' && send_buffer[HEADER_BYTES + i] != EOF){
-            i++;
-        }
-        if (send_buffer[HEADER_BYTES + i] == '\n'){
-            i++;
-        }
-        int buf_len = i;
-        */
+
         int buf_len = count;
-        /*
-        if(send_buffer[HEADER_BYTES + buf_len-1] == '\n'){
-            send_buffer[HEADER_BYTES + buf_len-1] = '\0';
-        }
-        */
+  
         //printf("sending: %s\n", &send_buffer[HEADER_BYTES]);
 
 
@@ -220,11 +217,59 @@ int main(int argc, char *argv[])
             perror("send");
             exit(1);
         }
+        //printf("numbytes:%d\n", numbytes);
 
+        /*
         if ((numbytes = recv(sockfd, send_buffer, MAX_MESSAGE_SIZE, 0)) == -1) {
             perror("recv");
             exit(1);
         }
+        */
+
+
+        /*        
+        if ((numbytes = recv(sockfd, send_buffer, 8, 0)) == -1) {
+            perror("recv");
+            exit(1);
+        }     
+        int length_receive = ntohl( *(uint32_t *) (&send_buffer[4]));
+        length_receive -= 8;
+        int offset = 8;
+        while(length_receive) {
+            numbytes = recv(sockfd, send_buffer + offset, 100, 0);
+            //printf("In_loop numbytes_recv:%d\n", numbytes);
+            if (numbytes > 0) {
+                length_receive -= numbytes;
+                offset += numbytes;
+            }
+            else {
+                perror("recv");
+                exit(1);
+            }
+        }
+        numbytes = offset;
+        */
+        
+        //numbytes = recv_large(sockfd, send_buffer);
+        //printf("numbytes_recv:%d\n", numbytes);
+        if ((numbytes = recv_large(sockfd, send_buffer)) == -1){
+            perror("recv");
+            break;
+        }                
+        else if (numbytes == 0){
+            printf("zero recv, close connection\n");
+            break;
+        }
+
+        int ori_checksum = *(uint16_t *)(&send_buffer[2]);
+        checksum = 0;
+        memcpy(&send_buffer[2], &checksum, sizeof(uint16_t));
+
+        if (ori_checksum != checksum1(send_buffer, numbytes)){
+            perror("checksum");
+            break;
+        }
+    
 
         numbytes -= 8;
         int ori_numbytes = numbytes;
