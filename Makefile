@@ -1,3 +1,5 @@
+.PHONY : all clean
+
 # the compiler: gcc for C program, define as g++ for C++
 CC = gcc
 
@@ -8,14 +10,14 @@ CFLAGS  = -Wall
 
 all: server client server_select
 
-server: server.c
-	$(CC) $(CFLAGS) -o server server.c
+server: server.c packet.c packet.h
+	$(CC) $(CFLAGS) -o server server.c packet.c
 
-client: client.c
-	$(CC) $(CFLAGS) -o client client.c
+client: client.c packet.c packet.h
+	$(CC) $(CFLAGS) -o client client.c packet.c
 
-server_select: server_select.c
-	$(CC) $(CFLAGS) -o server_select server_select.c
+server_select: server_select.c packet.c packet.h
+	$(CC) $(CFLAGS) -o server_select server_select.c packet.c
 
 check: server client server_select
 	./client -h 143.248.56.16 -p 3000 -o 0 -s 100000 < sample/burrito.txt > 1.txt

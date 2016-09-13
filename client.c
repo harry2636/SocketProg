@@ -14,63 +14,16 @@ I implemented Caesar Cipher algorithm with suggested header transfer algorithm.
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
-
 #include <arpa/inet.h>
+#include "packet.h"
 
-
-#define MAX_MESSAGE_SIZE (10 * (1<<20)) // max number of bytes we can get at once, should be 10MB
-
-#define HEADER_BYTES 8
 
 #define ARGS 9 // number of command line arguments
 
-/* checksum calculting function from http://locklessinc.com/articles/tcp_checksum/ which is introduced the in Lab slide */
-unsigned short checksum1(const char *buf, unsigned size)
-{
-    unsigned sum = 0;
-    int i;
 
-    /* Accumulate checksum */
-    for (i = 0; i < size - 1; i += 2)
-    {
-        unsigned short word16 = *(unsigned short *) &buf[i];
-        sum += word16;
-    }
-
-    /* Handle odd-sized case */
-    if (size & 1)
-    {
-        unsigned short word16 = (unsigned char) buf[i];
-        sum += word16;
-    }
-
-    /* Fold to get the ones-complement result */
-    while (sum >> 16) sum = (sum & 0xFFFF)+(sum >> 16);
-
-    /* Invert to get the negative in ones-complement arithmetic */
-    return ~sum;
-}
-
-void debug_message(const char *buf){
-    printf("operator: %hhu\n", buf[0]);
-    printf("shift: %hhu\n", buf[1]);
-    printf("checksum: %hu\n", *(uint16_t *)(&buf[2]) );
-    printf("length: %u\n", ntohl( *(uint32_t *) (&buf[4])));
-    //printf("data: %s\n\n", &buf[HEADER_BYTES]);
-    uint32_t length = ntohl( *(uint32_t *) (&buf[4]));
-    length -= 8;
-    uint32_t ori_length = length;
-    while (length){
-        printf("Printed char value\n");
-        printf("%hu\n", (unsigned short)buf[HEADER_BYTES + ori_length - length] );
-        length--;
-    }
-
-}
 
 /* Modified clibrary fgets function implementation in The C Programming Language.(p165, 2nd ed.)
 I found it in http://stackoverflow.com/questions/16397832/fgets-implementation-kr */
-
 uint32_t new_fgets(char* s, int n, FILE *iop)
 {
     register int c;
@@ -95,17 +48,6 @@ uint32_t new_fgets(char* s, int n, FILE *iop)
     *cs = '\0';
     //return (c == EOF && cs == s) ? NULL : s;
     return count;
-}
-
-/* function from http://beej.us/guide/bgnet/output/html/singlepage/bgnet.html */
-// get sockaddr, IPv4 or IPv6:
-void *get_in_addr(struct sockaddr *sa)
-{
-    if (sa->sa_family == AF_INET) {
-        return &(((struct sockaddr_in*)sa)->sin_addr);
-    }
-
-    return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
 /* part of the codes are based on network connecting structure code from http://beej.us/guide/bgnet/output/html/singlepage/bgnet.html */
@@ -173,6 +115,7 @@ int main(int argc, char *argv[])
             }
             int ori_shift = atoi(argv[i+1]);
 
+            
             if (ori_shift < 0) {
                 perror("Invalid shift value");
                 exit(1);
@@ -181,6 +124,8 @@ int main(int argc, char *argv[])
             if (ori_shift >= 26) {
                 ori_shift %=  26;
             }
+
+            
             shift = (uint8_t)ori_shift;
 
             s_flag = 1;
