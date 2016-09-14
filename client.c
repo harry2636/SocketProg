@@ -32,21 +32,16 @@ uint32_t new_fgets(char* s, int n, FILE *iop)
     uint32_t count = 0;
     while (--n > 0 && (c = getc(iop)) != EOF) {
         count++;
-        //printf("fgets c: %c !\n", c);
-        //printf("count :%d\n", count);
-
         if ((*cs++ = c) == '\n') {
             break;
         }
         if (count == 1000) {
-        //if (count == 1000*1000*10) {
             cs++;
             break;
         }
     }
 
     *cs = '\0';
-    //return (c == EOF && cs == s) ? NULL : s;
     return count;
 }
 
@@ -211,53 +206,19 @@ int main(int argc, char *argv[])
         memcpy(&send_buffer[2], &checksum, sizeof(uint16_t));
 
         //debug_message(send_buffer);
-        //printf("==================\n");
 
         if ((numbytes = send(sockfd, send_buffer, HEADER_BYTES + buf_len, 0 )) == -1) {
             perror("send");
             exit(1);
         }
-        //printf("numbytes:%d\n", numbytes);
 
-        /*
-        if ((numbytes = recv(sockfd, send_buffer, MAX_MESSAGE_SIZE, 0)) == -1) {
-            perror("recv");
-            exit(1);
-        }
-        */
-
-
-        /*        
-        if ((numbytes = recv(sockfd, send_buffer, 8, 0)) == -1) {
-            perror("recv");
-            exit(1);
-        }     
-        int length_receive = ntohl( *(uint32_t *) (&send_buffer[4]));
-        length_receive -= 8;
-        int offset = 8;
-        while(length_receive) {
-            numbytes = recv(sockfd, send_buffer + offset, 100, 0);
-            //printf("In_loop numbytes_recv:%d\n", numbytes);
-            if (numbytes > 0) {
-                length_receive -= numbytes;
-                offset += numbytes;
-            }
-            else {
-                perror("recv");
-                exit(1);
-            }
-        }
-        numbytes = offset;
-        */
-        
-        //numbytes = recv_large(sockfd, send_buffer);
         //printf("numbytes_recv:%d\n", numbytes);
         if ((numbytes = recv_large(sockfd, send_buffer)) == -1){
             perror("recv");
             break;
         }                
         else if (numbytes == 0){
-            printf("zero recv, close connection\n");
+            perror("zero recv, close connection");
             break;
         }
 
@@ -279,8 +240,6 @@ int main(int argc, char *argv[])
             numbytes--;
         }
 
-
-        //printf("%c", &send_buffer[HEADER_BYTES]);
 
         //debug_message(send_buffer);
     }

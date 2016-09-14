@@ -7,7 +7,8 @@
 #include <ctype.h>
 #include <stdlib.h>
 
-#define MAX_MESSAGE_SIZE (10 * (1<<20)) // max number of bytes we can get at once, should be 10MB
+#define MAX_MESSAGE_SIZE (1000 * 1000 * 10) // max number of bytes we can get at once, should be 10MB
+//#define MAX_MESSAGE_SIZE ((10 * (1<<20)) + 8) // max number of bytes we can get at once, should be 10MB
 
 #define HEADER_BYTES 8
 

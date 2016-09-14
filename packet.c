@@ -1,7 +1,7 @@
 #include "packet.h"
 
-
 /* checksum calculting function from http://locklessinc.com/articles/tcp_checksum/ which is introduced in the Lab slide */
+
 unsigned short checksum1(const char *buf, unsigned size)
 {
     unsigned sum = 0;
@@ -27,6 +27,7 @@ unsigned short checksum1(const char *buf, unsigned size)
     /* Invert to get the negative in ones-complement arithmetic */
     return ~sum;
 }
+
 
 /* function from http://beej.us/guide/bgnet/output/html/singlepage/bgnet.html */
 // get sockaddr, IPv4 or IPv6:
@@ -99,6 +100,7 @@ int recv_large(int sockfd, char *buf){
     	return 0;
     }
 
+
     int length_receive = ntohl( *(uint32_t *) (&buf[4]));
     length_receive -= numbytes;
     int offset = numbytes;
@@ -109,6 +111,10 @@ int recv_large(int sockfd, char *buf){
         if (numbytes > 0) {
             length_receive -= numbytes;
             offset += numbytes;
+            if (offset > MAX_MESSAGE_SIZE) {
+                fprintf(stderr, "Recv exceeded the 10MB buffer size\n");
+                return -1;
+            }
         }
         else {
         	return -1;

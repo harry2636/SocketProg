@@ -142,7 +142,6 @@ int main(int argc, char *argv[])
 
                     // handle data from a client
                     if ((nbytes = recv_large(i, recv_buffer)) <= 0) {
-                    //if ((nbytes = recv(i, recv_buffer, MAX_MESSAGE_SIZE, 0)) <= 0) {
                         // got error or connection closed by client
                         if (nbytes == 0) {
                             // connection closed

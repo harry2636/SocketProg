@@ -143,19 +143,14 @@ int main(int argc, char *argv[])
                     perror("recv");
                     break;
                 }                
-                /*
-                if ((numbytes = recv(new_fd, recv_buffer, MAX_MESSAGE_SIZE, 0)) == -1){
-                    perror("recv");
-                    break;
-                }
-                */
                 else if (numbytes == 0){
                     printf("zero recv, close connection\n");
                     break;
                 }
-                printf("numbytes:%d\n", numbytes);
-                debug_message(recv_buffer);
+                //printf("numbytes:%d\n", numbytes);
 
+                //debug_message(recv_buffer);
+                
 
                 int ori_checksum = *(uint16_t *)(&recv_buffer[2]);
 
