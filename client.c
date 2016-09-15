@@ -212,7 +212,7 @@ int main(int argc, char *argv[])
             exit(1);
         }
 
-        //printf("numbytes_recv:%d\n", numbytes);
+        
         if ((numbytes = recv_large(sockfd, send_buffer)) == -1){
             perror("recv");
             break;
@@ -221,12 +221,14 @@ int main(int argc, char *argv[])
             perror("zero recv, close connection");
             break;
         }
+        //printf("numbytes_recv:%d\n", numbytes);
 
         int ori_checksum = *(uint16_t *)(&send_buffer[2]);
         checksum = 0;
         memcpy(&send_buffer[2], &checksum, sizeof(uint16_t));
 
         if (ori_checksum != checksum1(send_buffer, numbytes)){
+            fprintf(stderr, "ori: %d, curr: %d\n",ori_checksum,checksum1(send_buffer, numbytes));
             perror("checksum");
             break;
         }

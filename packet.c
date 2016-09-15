@@ -4,7 +4,7 @@
 
 unsigned short checksum1(const char *buf, unsigned size)
 {
-    unsigned sum = 0;
+    unsigned long long int sum = 0;
     int i;
 
     /* Accumulate checksum */
