@@ -21,7 +21,7 @@ I implemented Caesar Cipher algorithm with suggested header transfer algorithm.
 
 #define ARGS 3 // number of command line arguments
 
-#define BACKLOG 10     // how many pending connections queue will hold
+#define BACKLOG 200     // how many pending connections queue will hold
 
 
 /* function from http://beej.us/guide/bgnet/output/html/singlepage/bgnet.html */

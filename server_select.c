@@ -18,6 +18,8 @@
 
 #define ARGS 3 // number of command line arguments
 
+#define BACKLOG 200     // how many pending connections queue will hold
+
 /* part of the codes are based on network connecting structure code from http://beej.us/guide/bgnet/output/html/singlepage/bgnet.html */
 int main(int argc, char *argv[])
 {
@@ -95,7 +97,7 @@ int main(int argc, char *argv[])
     freeaddrinfo(ai); // all done with this
 
     // listen
-    if (listen(listener, 10) == -1) {
+    if (listen(listener, BACKLOG) == -1) {
         perror("listen");
         exit(3);
     }
