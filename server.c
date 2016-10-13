@@ -173,6 +173,10 @@ int main(int argc, char *argv[])
                     else if (op == 1) {
                         addr[0] = caesar_decrypt(addr[0], shift);
                     }
+                    else {
+                        perror("invalid operation type");
+                        break;
+                    }
                     
                     addr++;
 

@@ -166,7 +166,8 @@ int main(int argc, char *argv[])
 
                         if (ori_checksum != checksum1(recv_buffer, nbytes)){
                             perror("checksum");
-                            break;
+                            close(i); // bye!
+                            FD_CLR(i, &master); // remove from master set
                         }
 
                         char *addr = &recv_buffer[HEADER_BYTES];
@@ -193,7 +194,8 @@ int main(int argc, char *argv[])
 
                         if (send(i, recv_buffer, nbytes, 0) == -1){
                             perror("send");
-                            break;
+                            close(i); // bye!
+                            FD_CLR(i, &master); // remove from master set
                         }
                     }
                 } // END handle data from client
